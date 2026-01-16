@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TruthCheck AI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script> tailwind.config = { darkMode: 'class' } </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style> body { font-family: 'Inter', sans-serif; } </style>
+</head>
+<body class="bg-gray-50 text-gray-800 dark:bg-gray-900 dark:text-gray-100 transition-colors duration-300">
+
+    <nav class="sticky top-0 z-50 bg-white/80 dark:bg-gray-800/90 backdrop-blur-md shadow-sm border-b dark:border-gray-700">
+        <div class="max-w-7xl mx-auto px-4 h-16 flex justify-between items-center">
+            <div onclick="switchView('home')" class="cursor-pointer text-xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">
+                TruthCheck.AI
+            </div>
+            <div class="hidden md:flex space-x-8">
+                <button onclick="switchView('home')" class="nav-btn text-blue-600 font-bold" id="btn-home">Home</button>
+                <button onclick="switchView('world')" class="nav-btn text-gray-500 hover:text-blue-600" id="btn-world">World</button>
+                <button onclick="switchView('india')" class="nav-btn text-gray-500 hover:text-blue-600" id="btn-india">India</button>
+            </div>
+            <button onclick="toggleTheme()" class="p-2 text-xl">🌗</button>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-4 py-10 min-h-screen">
+        
+        <div id="view-home" class="view-section animate-fade-in">
+            <section class="text-center mb-16 pt-5">
+                <h1 class="text-5xl font-black mb-6">VERIFY THE <span class="text-blue-600">TRUTH</span></h1>
+                <div class="max-w-2xl mx-auto flex shadow-2xl rounded-full overflow-hidden border bg-white dark:bg-gray-800 dark:border-gray-700">
+                    <input type="text" id="newsInput" placeholder="Paste headline..." class="w-full px-8 py-5 outline-none text-lg bg-transparent">
+                    <button onclick="checkNews()" class="bg-blue-600 text-white px-10 py-4 font-bold hover:bg-blue-700">
+                        <span id="btnText">ANALYZE</span>
+                    </button>
+                </div>
+            </section>
+
+            <section id="result-section" class="hidden max-w-3xl mx-auto mb-16">
+                <div id="result-card" class="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl p-8 border-2 relative overflow-hidden">
+                    <div id="status-bar" class="absolute top-0 left-0 w-full h-2 bg-gray-200"></div>
+                    <h2 id="result-status" class="text-4xl font-black text-center mb-2 uppercase"></h2>
+                    <p class="text-center text-gray-500 mb-6">Confidence: <span id="confidence-score"></span></p>
+                    <div class="space-y-6">
+                        <div class="bg-gray-50 dark:bg-gray-700 p-6 rounded-xl">
+                            <p class="text-xs uppercase font-bold text-gray-400">Headline</p>
+                            <p id="searched-query" class="text-lg font-serif italic"></p>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-blue-600">AI Explanation</h3>
+                            <p id="ai-explanation"></p>
+                        </div>
+                        <div class="bg-blue-50 dark:bg-blue-900/20 p-5 rounded-xl border-l-4 border-blue-500">
+                            <h3 class="font-bold text-sm text-blue-800 dark:text-blue-300">Fact Check Context</h3>
+                            <p id="fact-check" class="text-sm"></p>
+                        </div>
+                    </div>
+                    <div class="mt-8 flex justify-center gap-4">
+                        <button onclick="downloadResult()" class="px-5 py-2 bg-gray-100 dark:bg-gray-700 rounded-lg">⬇ Save</button>
+                        <button onclick="showHomeInput()" class="px-5 py-2 bg-blue-600 text-white rounded-lg">🔄 Check Another</button>
+                    </div>
+                </div>
+            </section>
+
+            <section id="home-feed-section">
+                <h2 class="text-2xl font-bold mb-6 flex items-center gap-2">
+                    <span class="text-xl">🔥</span> Trending Now (India & World)
+                </h2>
+                <div id="home-news-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+            </section>
+        </div>
+
+        <div id="view-world" class="view-section hidden">
+            <h2 class="text-3xl font-bold mb-8">🌍 World Headlines</h2>
+            <div id="world-news-grid" class="grid grid-cols-1 md:grid-cols-3 gap-6"></div>
+        </div>
+
+        <div id="view-india" class="view-section hidden">
+            <h2 class="text-3xl font-bold mb-8">🇮🇳 India Headlines</h2>
+            <div id="india-news-grid" class="grid grid-cols-1 md:grid-cols-3 gap-6"></div>
+        </div>
+
+    </main>
+    <script src="script.js"></script>
+</body>
+</html>
