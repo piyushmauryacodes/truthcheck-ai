@@ -1,5 +1,7 @@
 # 🕵️ TruthCheck.AI - Multimodal AI Verification System
 
+[![Live Demo](https://img.shields.io/badge/Live-Demo-brightgreen?style=for-the-badge&logo=render)](https://truthcheck-ai-1-tiqp.onrender.com/)
+
 **TruthCheck.AI** is a premium, full-stack web application designed to combat the digital epidemic of misinformation. Unlike standard fact-checkers, TruthCheck uses multimodal AI to analyze **News Headlines, Visual Media (Images/Videos), and Job Offers** to ensure you only trust what is real.
 
 ---
