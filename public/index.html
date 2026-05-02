@@ -4,111 +4,428 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TruthCheck AI</title>
+    <title>TruthCheck AI | Verify Reality</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script> tailwind.config = { darkMode: 'class' } </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Outfit:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        body {
-            font-family: 'Inter', sans-serif;
-        }
+        body { font-family: 'Inter', sans-serif; }
+        h1, h2, h3 { font-family: 'Outfit', sans-serif; }
+        .glass { background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(10px); }
+        .dark .glass { background: rgba(17, 24, 39, 0.7); }
+        .animate-fade-in { animation: fadeIn 0.3s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .gradient-text { background: linear-gradient(to right, #2563eb, #7c3aed); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .modal-blur { backdrop-filter: blur(8px); background-color: rgba(0, 0, 0, 0.5); }
     </style>
 </head>
 
 <body class="bg-gray-50 text-gray-800 dark:bg-gray-900 dark:text-gray-100 transition-colors duration-300">
 
-    <nav
-        class="sticky top-0 z-50 bg-white/80 dark:bg-gray-800/90 backdrop-blur-md shadow-sm border-b dark:border-gray-700">
+    <!-- Navbar -->
+    <nav class="sticky top-0 z-50 glass border-b dark:border-gray-700">
         <div class="max-w-7xl mx-auto px-4 h-16 flex justify-between items-center">
-            <div onclick="switchView('home')"
-                class="cursor-pointer text-xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">
+            <div onclick="switchView('home')" class="cursor-pointer text-2xl font-black gradient-text">
                 TruthCheck.AI
             </div>
-            <div class="hidden md:flex space-x-8">
-                <button onclick="switchView('home')" class="nav-btn text-blue-600 font-bold" id="btn-home">Home</button>
-                <button onclick="switchView('world')" class="nav-btn text-gray-500 hover:text-blue-600"
-                    id="btn-world">World</button>
-                <button onclick="switchView('india')" class="nav-btn text-gray-500 hover:text-blue-600"
-                    id="btn-india">India</button>
+            <div class="hidden lg:flex space-x-6 text-sm font-semibold">
+                <button onclick="switchView('home')" class="nav-btn transition-all duration-200" id="btn-home">News</button>
+                <button onclick="switchView('visuals')" class="nav-btn text-gray-500 hover:text-blue-600 transition-all duration-200" id="btn-visuals">Visuals</button>
+                <button onclick="switchView('jobs')" class="nav-btn text-gray-500 hover:text-blue-600 transition-all duration-200" id="btn-jobs">Jobs</button>
+                <button onclick="switchView('world')" class="nav-btn text-gray-500 hover:text-blue-600 transition-all duration-200" id="btn-world">World</button>
+                <button onclick="switchView('india')" class="nav-btn text-gray-500 hover:text-blue-600 transition-all duration-200" id="btn-india">India</button>
             </div>
-            <button onclick="toggleTheme()" class="p-2 text-xl">🌗</button>
+            <div class="flex items-center space-x-4">
+                <div id="current-time" class="hidden md:block text-xs font-mono bg-gray-100 dark:bg-gray-800 px-3 py-1 rounded-full border dark:border-gray-700"></div>
+                <button id="theme-toggle" onclick="toggleTheme()" class="p-2.5 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-all">
+                    <span id="theme-icon">🌙</span>
+                </button>
+            </div>
         </div>
     </nav>
 
     <main class="max-w-7xl mx-auto px-4 py-10 min-h-screen">
 
+        <!-- Result Modal -->
+        <div id="result-modal" class="fixed inset-0 z-[60] hidden modal-blur flex items-center justify-center p-4">
+            <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl max-w-2xl w-full relative overflow-hidden animate-fade-in border dark:border-gray-700">
+                <button onclick="closeModal()" class="absolute top-4 right-4 p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 z-10">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+                
+                <div id="status-bar" class="h-2 w-full bg-gray-200"></div>
+                
+                <div class="p-8" id="modal-content">
+                    <div class="text-center mb-6">
+                        <h2 id="result-status" class="text-4xl font-black uppercase mb-1"></h2>
+                        <div class="flex items-center justify-center gap-2">
+                            <span class="text-gray-500 dark:text-gray-400 font-semibold">Confidence:</span>
+                            <span id="confidence-score" class="text-blue-600 font-black"></span>
+                        </div>
+                    </div>
+
+                    <div class="space-y-5">
+                        <div class="bg-gray-50 dark:bg-gray-900/50 p-5 rounded-2xl border dark:border-gray-700">
+                            <p class="text-[10px] uppercase font-bold text-gray-400 tracking-wider mb-1">Analyzed Input</p>
+                            <p id="searched-query" class="text-md font-medium italic"></p>
+                        </div>
+                        
+                        <div>
+                            <h3 class="font-bold text-lg mb-2 flex items-center gap-2 text-blue-600">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.364-7.364l-.707-.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                                </svg>
+                                AI Explanation
+                            </h3>
+                            <p id="ai-explanation" class="text-sm leading-relaxed text-gray-600 dark:text-gray-300"></p>
+                        </div>
+
+                        <div id="fact-check-container" class="bg-blue-50 dark:bg-blue-900/20 p-5 rounded-2xl border-l-4 border-blue-500">
+                            <h3 class="font-bold text-sm text-blue-800 dark:text-blue-300 mb-1">Fact Check Context</h3>
+                            <p id="fact-check" class="text-sm leading-relaxed"></p>
+                        </div>
+                    </div>
+
+                    <div class="mt-10 flex flex-col sm:flex-row gap-4">
+                        <button onclick="downloadPDF()" class="flex-1 bg-gray-900 dark:bg-white dark:text-gray-900 text-white px-6 py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 hover:opacity-90 transition">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                            </svg>
+                            Download Report (PDF)
+                        </button>
+                        <button onclick="closeModal()" class="flex-1 bg-blue-600 text-white px-6 py-3.5 rounded-xl font-bold hover:bg-blue-700 transition">
+                            Check Another
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- News Section -->
         <div id="view-home" class="view-section animate-fade-in">
             <section class="text-center mb-16 pt-5">
-                <h1 class="text-5xl font-black mb-6">VERIFY THE <span class="text-blue-600">TRUTH</span></h1>
-                <div
-                    class="max-w-2xl mx-auto flex shadow-2xl rounded-full overflow-hidden border bg-white dark:bg-gray-800 dark:border-gray-700">
-                    <input type="text" id="newsInput" placeholder="Paste headline..."
-                        class="w-full px-8 py-5 outline-none text-lg bg-transparent">
-                    <button onclick="checkNews()" class="bg-blue-600 text-white px-10 py-4 font-bold hover:bg-blue-700">
+                <h1 class="text-6xl font-black mb-6 leading-tight">VERIFY THE <span class="gradient-text">TRUTH</span></h1>
+                <p class="text-gray-500 dark:text-gray-400 mb-10 max-w-xl mx-auto">AI-powered misinformation detection. Paste headlines, articles, or claims to verify their authenticity instantly.</p>
+                
+                <div class="max-w-3xl mx-auto flex p-2 shadow-2xl rounded-3xl border bg-white dark:bg-gray-800 dark:border-gray-700 focus-within:ring-4 ring-blue-500/10 transition-all">
+                    <input type="text" id="newsInput" placeholder="Paste news headline or claim here..."
+                        class="w-full px-6 py-4 outline-none text-lg bg-transparent">
+                    <button onclick="checkNews()" class="bg-blue-600 text-white px-10 py-4 rounded-2xl font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-600/20">
                         <span id="btnText">ANALYZE</span>
                     </button>
                 </div>
             </section>
 
-            <section id="result-section" class="hidden max-w-3xl mx-auto mb-16">
-                <div id="result-card"
-                    class="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl p-8 border-2 relative overflow-hidden">
-                    <div id="status-bar" class="absolute top-0 left-0 w-full h-2 bg-gray-200"></div>
-                    <h2 id="result-status" class="text-4xl font-black text-center mb-2 uppercase"></h2>
-                    <p class="text-center text-gray-500 mb-6">Confidence: <span id="confidence-score"></span></p>
-                    <div class="space-y-6">
-                        <div class="bg-gray-50 dark:bg-gray-700 p-6 rounded-xl">
-                            <p class="text-xs uppercase font-bold text-gray-400">Headline</p>
-                            <p id="searched-query" class="text-lg font-serif italic"></p>
-                        </div>
-                        <div>
-                            <h3 class="font-bold text-blue-600">AI Explanation</h3>
-                            <p id="ai-explanation"></p>
-                        </div>
-                        <div class="bg-blue-50 dark:bg-blue-900/20 p-5 rounded-xl border-l-4 border-blue-500">
-                            <h3 class="font-bold text-sm text-blue-800 dark:text-blue-300">Fact Check Context</h3>
-                            <p id="fact-check" class="text-sm"></p>
+            <section id="home-feed-section" class="mb-20">
+                <h2 class="text-3xl font-extrabold mb-8 flex items-center gap-3">
+                    <span class="p-2 bg-orange-100 dark:bg-orange-900/30 rounded-lg">🔥</span> Trending News
+                </h2>
+                <div id="home-news-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"></div>
+            </section>
+
+            <!-- About & Working for News -->
+            <section class="mt-20 border-t dark:border-gray-800 pt-16">
+                <div class="grid md:grid-cols-2 gap-12 items-center mb-20">
+                    <div>
+                        <h2 class="text-4xl font-black mb-6">About <span class="text-blue-600">News Verification</span></h2>
+                        <p class="text-gray-600 dark:text-gray-400 leading-relaxed">
+                            Our News Verification engine uses advanced Large Language Models and real-time web search integration to cross-reference claims against thousands of trusted sources. We analyze linguistic patterns, source credibility, and factual consistency to give you a definitive verdict on any piece of information.
+                        </p>
+                    </div>
+                    <div class="bg-gradient-to-br from-blue-500 to-indigo-600 p-1 rounded-3xl">
+                        <div class="bg-white dark:bg-gray-900 rounded-[calc(1.5rem-4px)] p-8">
+                            <div class="flex items-center gap-4 mb-4">
+                                <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center text-blue-600 font-black">AI</div>
+                                <h3 class="font-bold text-xl">Real-time Intelligence</h3>
+                            </div>
+                            <p class="text-sm text-gray-500">Fighting fake news with state-of-the-art neural networks trained on millions of verified facts.</p>
                         </div>
                     </div>
-                    <div class="mt-8 flex justify-center gap-4">
-                        <button onclick="downloadResult()" class="px-5 py-2 bg-gray-100 dark:bg-gray-700 rounded-lg">⬇
-                            Save</button>
-                        <button onclick="showHomeInput()" class="px-5 py-2 bg-blue-600 text-white rounded-lg">🔄 Check
-                            Another</button>
+                </div>
+
+                <h2 class="text-3xl font-black mb-10 text-center">How it Works</h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div class="bg-white dark:bg-gray-800 p-6 rounded-3xl border dark:border-gray-700 hover:shadow-xl transition-all group">
+                        <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-2xl flex items-center justify-center text-blue-600 mb-4 font-black group-hover:scale-110 transition-transform">1</div>
+                        <h4 class="font-bold mb-2">Input Processing</h4>
+                        <p class="text-sm text-gray-500">System sanitizes and analyzes the text input for key entities and claims.</p>
+                    </div>
+                    <div class="bg-white dark:bg-gray-800 p-6 rounded-3xl border dark:border-gray-700 hover:shadow-xl transition-all group">
+                        <div class="w-12 h-12 bg-indigo-100 dark:bg-indigo-900/30 rounded-2xl flex items-center justify-center text-indigo-600 mb-4 font-black group-hover:scale-110 transition-transform">2</div>
+                        <h4 class="font-bold mb-2">Source Mapping</h4>
+                        <p class="text-sm text-gray-500">AI cross-references the claim against a database of verified news articles.</p>
+                    </div>
+                    <div class="bg-white dark:bg-gray-800 p-6 rounded-3xl border dark:border-gray-700 hover:shadow-xl transition-all group">
+                        <div class="w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-2xl flex items-center justify-center text-purple-600 mb-4 font-black group-hover:scale-110 transition-transform">3</div>
+                        <h4 class="font-bold mb-2">Sentiment Analysis</h4>
+                        <p class="text-sm text-gray-500">Analysis of emotional bias and sensationalism commonly found in fake claims.</p>
+                    </div>
+                    <div class="bg-white dark:bg-gray-800 p-6 rounded-3xl border dark:border-gray-700 hover:shadow-xl transition-all group">
+                        <div class="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-2xl flex items-center justify-center text-green-600 mb-4 font-black group-hover:scale-110 transition-transform">4</div>
+                        <h4 class="font-bold mb-2">Final Verdict</h4>
+                        <p class="text-sm text-gray-500">Generating detailed explanation with a confidence score and report.</p>
                     </div>
                 </div>
             </section>
+        </div>
 
-            <section id="home-feed-section">
-                <h2 class="text-2xl font-bold mb-6 flex items-center gap-2">
-                    <span class="text-xl">🔥</span> Trending Now (India & World)
-                </h2>
-                <div id="home-news-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+        <!-- Visuals Section -->
+        <div id="view-visuals" class="view-section hidden animate-fade-in">
+            <section class="text-center mb-16 pt-5">
+                <h1 class="text-6xl font-black mb-6 leading-tight">DETECT <span class="text-purple-600">DEEPFAKES</span></h1>
+                <p class="text-gray-500 dark:text-gray-400 mb-10 max-w-xl mx-auto">Upload an image or video to check if it was generated or altered by AI tools.</p>
+                
+                <div class="max-w-xl mx-auto bg-white dark:bg-gray-800 p-8 rounded-[2.5rem] shadow-2xl border dark:border-gray-700 relative group overflow-hidden">
+                    <div class="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-pink-500/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                    
+                    <label for="visualInput" class="cursor-pointer block border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-3xl p-12 hover:border-purple-500 dark:hover:border-purple-500 transition-colors mb-6 bg-gray-50 dark:bg-gray-900/50">
+                        <div class="flex flex-col items-center">
+                            <div class="w-16 h-16 bg-purple-100 dark:bg-purple-900/30 rounded-2xl flex items-center justify-center text-purple-600 mb-4">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
+                            </div>
+                            <span class="text-lg font-bold mb-1">Click to Upload Media</span>
+                            <span class="text-xs text-gray-400">PNG, JPG, or MP4 (Max 5MB)</span>
+                        </div>
+                        <input type="file" id="visualInput" accept="image/*, video/*" class="hidden">
+                    </label>
+
+                    <button onclick="checkVisual()" id="btn-visual" class="w-full bg-purple-600 text-white py-5 rounded-2xl font-black hover:bg-purple-700 transition-all shadow-xl shadow-purple-600/20 active:scale-[0.98]">
+                        ANALYZE PIXELS
+                    </button>
+                </div>
+            </section>
+
+            <!-- About & Working for Visuals -->
+            <section class="mt-20 border-t dark:border-gray-800 pt-16">
+                <div class="grid md:grid-cols-2 gap-12 items-center mb-20">
+                    <div class="order-2 md:order-1 bg-gradient-to-br from-purple-500 to-pink-600 p-1 rounded-3xl">
+                        <div class="bg-white dark:bg-gray-900 rounded-[calc(1.5rem-4px)] p-8">
+                            <h3 class="font-bold text-xl mb-4">Pixel-level Forensics</h3>
+                            <p class="text-sm text-gray-500">We look for microscopic artifacts that AI generators (like Midjourney, Sora, or DALL-E) leave behind in the noise and structure of an image.</p>
+                        </div>
+                    </div>
+                    <div class="order-1 md:order-2">
+                        <h2 class="text-4xl font-black mb-6">About <span class="text-purple-600">Visual Detection</span></h2>
+                        <p class="text-gray-600 dark:text-gray-400 leading-relaxed">
+                            Our Deepfake Detector uses Convolutional Neural Networks (CNNs) to identify synthetic textures and GAN fingerprints. From face swaps to entirely AI-generated scenes, we provide a probabilistic assessment of any visual media.
+                        </p>
+                    </div>
+                </div>
+
+                <h2 class="text-3xl font-black mb-10 text-center">Visual Analysis Stages</h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div class="glass p-6 rounded-3xl border dark:border-gray-700">
+                        <div class="w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-2xl flex items-center justify-center text-purple-600 mb-4 font-black">1</div>
+                        <h4 class="font-bold mb-2">Noise Analysis</h4>
+                        <p class="text-sm text-gray-500">Examining sensor noise patterns to find digital inconsistencies.</p>
+                    </div>
+                    <div class="glass p-6 rounded-3xl border dark:border-gray-700">
+                        <div class="w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-2xl flex items-center justify-center text-purple-600 mb-4 font-black">2</div>
+                        <h4 class="font-bold mb-2">Lighting Check</h4>
+                        <p class="text-sm text-gray-500">Detecting unnatural light-shadow relationships often missed by AI.</p>
+                    </div>
+                    <div class="glass p-6 rounded-3xl border dark:border-gray-700">
+                        <div class="w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-2xl flex items-center justify-center text-purple-600 mb-4 font-black">3</div>
+                        <h4 class="font-bold mb-2">Boundary Scan</h4>
+                        <p class="text-sm text-gray-500">Checking for blending artifacts around faces and sharp edges.</p>
+                    </div>
+                    <div class="glass p-6 rounded-3xl border dark:border-gray-700">
+                        <div class="w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-2xl flex items-center justify-center text-purple-600 mb-4 font-black">4</div>
+                        <h4 class="font-bold mb-2">GAN Fingerprinting</h4>
+                        <p class="text-sm text-gray-500">Identifying signatures of specific AI generation architectures.</p>
+                    </div>
+                </div>
             </section>
         </div>
 
-        <div id="view-world" class="view-section hidden">
-            <h2 class="text-3xl font-bold mb-8">🌍 World Headlines</h2>
-            <div id="world-news-grid" class="grid grid-cols-1 md:grid-cols-3 gap-6"></div>
+        <!-- Jobs Section -->
+        <div id="view-jobs" class="view-section hidden animate-fade-in">
+            <section class="text-center mb-16 pt-5">
+                <h1 class="text-6xl font-black mb-6 leading-tight">SCAN <span class="text-green-600">JOB SCAMS</span></h1>
+                <p class="text-gray-500 dark:text-gray-400 mb-10 max-w-xl mx-auto">Protect yourself from fake job offers. Verify texts, links, or screenshots of recruitment messages.</p>
+                
+                <div class="max-w-2xl mx-auto bg-white dark:bg-gray-800 p-8 rounded-[2.5rem] shadow-2xl border dark:border-gray-700 text-left">
+                    <div class="mb-6">
+                        <label class="block text-sm font-bold text-gray-400 uppercase tracking-widest mb-2 ml-1">Paste Message or Link</label>
+                        <textarea id="jobTextInput" rows="4" placeholder="Enter the job description or WhatsApp message here..."
+                            class="w-full px-6 py-4 rounded-2xl border dark:border-gray-700 bg-gray-50 dark:bg-gray-900 outline-none focus:ring-4 ring-green-500/10 transition-all"></textarea>
+                    </div>
+                    
+                    <div class="flex items-center gap-4 mb-6">
+                        <hr class="flex-1 dark:border-gray-700">
+                        <span class="text-xs font-bold text-gray-300">OR UPLOAD SCREENSHOT</span>
+                        <hr class="flex-1 dark:border-gray-700">
+                    </div>
+
+                    <input type="file" id="jobImageInput" accept="image/*"
+                        class="w-full text-sm text-gray-500 file:mr-4 file:py-3 file:px-6 file:rounded-xl file:border-0 file:text-sm file:font-bold file:bg-green-100 file:text-green-700 hover:file:bg-green-200 dark:file:bg-green-900/30 dark:file:text-green-400 cursor-pointer mb-8">
+                    
+                    <button onclick="checkJob()" id="btn-job" class="w-full bg-green-600 text-white py-5 rounded-2xl font-black hover:bg-green-700 transition-all shadow-xl shadow-green-600/20 active:scale-[0.98]">
+                        SCAN FOR RED FLAGS
+                    </button>
+                </div>
+            </section>
+
+            <!-- About & Working for Jobs -->
+            <section class="mt-20 border-t dark:border-gray-800 pt-16">
+                <div class="grid md:grid-cols-2 gap-12 items-center mb-20">
+                    <div>
+                        <h2 class="text-4xl font-black mb-6">About <span class="text-green-600">Job Verification</span></h2>
+                        <p class="text-gray-600 dark:text-gray-400 leading-relaxed">
+                            Recruitment fraud is at an all-time high. Our system analyzes job postings for "Red Flags" like unrealistic salaries, requests for upfront payment, or suspicious communication channels.
+                        </p>
+                    </div>
+                    <div class="bg-gradient-to-r from-green-500 to-emerald-600 rounded-3xl p-8 text-white">
+                        <h3 class="font-bold text-xl mb-4">Protect Your Data</h3>
+                        <p class="opacity-90">Fake job offers are often phishing attempts to steal your personal and financial information. Don't be a victim.</p>
+                    </div>
+                </div>
+
+                <h2 class="text-3xl font-black mb-10 text-center">Job Scanning Process</h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div class="bg-green-50 dark:bg-green-900/10 p-6 rounded-3xl border border-green-100 dark:border-green-800/30">
+                        <div class="w-12 h-12 bg-green-200 dark:bg-green-800 rounded-full flex items-center justify-center text-green-700 dark:text-green-200 mb-4 font-black">1</div>
+                        <h4 class="font-bold mb-2">Entity Extraction</h4>
+                        <p class="text-sm text-gray-500">Identifying company names, contact numbers, and compensation details.</p>
+                    </div>
+                    <div class="bg-green-50 dark:bg-green-900/10 p-6 rounded-3xl border border-green-100 dark:border-green-800/30">
+                        <div class="w-12 h-12 bg-green-200 dark:bg-green-800 rounded-full flex items-center justify-center text-green-700 dark:text-green-200 mb-4 font-black">2</div>
+                        <h4 class="font-bold mb-2">Database Check</h4>
+                        <p class="text-sm text-gray-500">Cross-referencing entities against known recruitment scam patterns.</p>
+                    </div>
+                    <div class="bg-green-50 dark:bg-green-900/10 p-6 rounded-3xl border border-green-100 dark:border-green-800/30">
+                        <div class="w-12 h-12 bg-green-200 dark:bg-green-800 rounded-full flex items-center justify-center text-green-700 dark:text-green-200 mb-4 font-black">3</div>
+                        <h4 class="font-bold mb-2">Language Pattern</h4>
+                        <p class="text-sm text-gray-500">Analyzing for "too good to be true" wording and urgent pressure tactics.</p>
+                    </div>
+                    <div class="bg-green-50 dark:bg-green-900/10 p-6 rounded-3xl border border-green-100 dark:border-green-800/30">
+                        <div class="w-12 h-12 bg-green-200 dark:bg-green-800 rounded-full flex items-center justify-center text-green-700 dark:text-green-200 mb-4 font-black">4</div>
+                        <h4 class="font-bold mb-2">Risk Scoring</h4>
+                        <p class="text-sm text-gray-500">Calculating a cumulative risk percentage based on all findings.</p>
+                    </div>
+                </div>
+            </section>
         </div>
 
-        <div id="view-india" class="view-section hidden">
-            <h2 class="text-3xl font-bold mb-8">🇮🇳 India Headlines</h2>
-            <div id="india-news-grid" class="grid grid-cols-1 md:grid-cols-3 gap-6"></div>
+        <!-- World Section -->
+        <div id="view-world" class="view-section hidden animate-fade-in">
+            <h2 class="text-4xl font-black mb-10 flex items-center gap-4">
+                <span class="text-3xl">🌍</span> Global News Feed
+            </h2>
+            <div id="world-news-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"></div>
+            
+            <section class="mt-20 border-t dark:border-gray-800 pt-16">
+                <div class="max-w-4xl mx-auto text-center">
+                    <h2 class="text-3xl font-black mb-6">About World News</h2>
+                    <p class="text-gray-500 leading-relaxed mb-12">
+                        Our global feed aggregates verified news from international bureaus. We focus on neutral reporting and cross-cultural fact-checking to provide a balanced view of world events.
+                    </p>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-8">
+                        <div class="p-8 bg-white dark:bg-gray-800 rounded-3xl shadow-sm">
+                            <h3 class="font-bold text-lg mb-2">Neutrality</h3>
+                            <p class="text-xs text-gray-400">Removing bias from complex global narratives.</p>
+                        </div>
+                        <div class="p-8 bg-white dark:bg-gray-800 rounded-3xl shadow-sm">
+                            <h3 class="font-bold text-lg mb-2">Multilingual</h3>
+                            <p class="text-xs text-gray-400">Analyzing sources in multiple languages for accuracy.</p>
+                        </div>
+                        <div class="p-8 bg-white dark:bg-gray-800 rounded-3xl shadow-sm">
+                            <h3 class="font-bold text-lg mb-2">24/7 Monitoring</h3>
+                            <p class="text-xs text-gray-400">Constant updates from global news networks.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
         </div>
-        <footer
-            class="fixed bottom-0 left-0 w-full bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border-t border-gray-200 dark:border-gray-800 py-3 z-40">
-            <div class="made-by-piyush text-center text-sm font-medium text-gray-600 dark:text-gray-400">
-                Made by
-                <span
-                    class="bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600 font-extrabold text-base px-1">
-                    PIYUSH MAURYA
-                </span>
-                with ❤️ & AI
-            </div>
-        </footer>
+
+        <!-- India Section -->
+        <div id="view-india" class="view-section hidden animate-fade-in">
+            <h2 class="text-4xl font-black mb-10 flex items-center gap-4">
+                <span class="text-3xl">🇮🇳</span> India News Feed
+            </h2>
+            <div id="india-news-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"></div>
+
+            <section class="mt-20 border-t dark:border-gray-800 pt-16">
+                <div class="max-w-4xl mx-auto text-center">
+                    <h2 class="text-3xl font-black mb-6">About India Desk</h2>
+                    <p class="text-gray-500 leading-relaxed mb-12">
+                        Tailored for the Indian demographic, this section monitors local misinformation trends, regional news, and government-verified updates across the subcontinent.
+                    </p>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-8">
+                        <div class="p-8 bg-white dark:bg-gray-800 rounded-3xl shadow-sm border-b-4 border-orange-500">
+                            <h3 class="font-bold text-lg mb-2">Hyper-local</h3>
+                            <p class="text-xs text-gray-400">Focus on state and regional level news trends.</p>
+                        </div>
+                        <div class="p-8 bg-white dark:bg-gray-800 rounded-3xl shadow-sm border-b-4 border-white dark:border-gray-600">
+                            <h3 class="font-bold text-lg mb-2">Cultural Context</h3>
+                            <p class="text-xs text-gray-400">Understanding local nuances in communication.</p>
+                        </div>
+                        <div class="p-8 bg-white dark:bg-gray-800 rounded-3xl shadow-sm border-b-4 border-green-500">
+                            <h3 class="font-bold text-lg mb-2">Rapid Response</h3>
+                            <p class="text-xs text-gray-400">Quickly debunking viral WhatsApp misinformation.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
     </main>
+
+    <footer class="bg-white dark:bg-gray-950 border-t dark:border-gray-800 pt-16 pb-32 lg:pb-16 mt-20">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
+                <div class="col-span-1 md:col-span-2">
+                    <div class="text-2xl font-black gradient-text mb-6">TruthCheck.AI</div>
+                    <p class="text-gray-500 dark:text-gray-400 max-w-sm mb-6">
+                        Empowering users to navigate the digital world with confidence by providing real-time AI-powered verification for news, media, and job offers.
+                    </p>
+                    <div class="flex gap-4">
+                        <a href="#" class="w-10 h-10 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center hover:bg-blue-600 hover:text-white transition-all">🐦</a>
+                        <a href="#" class="w-10 h-10 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center hover:bg-blue-600 hover:text-white transition-all">💼</a>
+                        <a href="#" class="w-10 h-10 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center hover:bg-blue-600 hover:text-white transition-all">📸</a>
+                    </div>
+                </div>
+                <div>
+                    <h4 class="font-bold mb-6 uppercase text-xs tracking-widest text-gray-400">Explore</h4>
+                    <ul class="space-y-4 text-sm font-semibold">
+                        <li><button onclick="switchView('home')" class="hover:text-blue-600 transition-colors">News Verify</button></li>
+                        <li><button onclick="switchView('visuals')" class="hover:text-blue-600 transition-colors">Deepfake Detect</button></li>
+                        <li><button onclick="switchView('jobs')" class="hover:text-blue-600 transition-colors">Job Scan</button></li>
+                        <li><button onclick="switchView('world')" class="hover:text-blue-600 transition-colors">World News</button></li>
+                        <li><button onclick="switchView('india')" class="hover:text-blue-600 transition-colors">India News</button></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-bold mb-6 uppercase text-xs tracking-widest text-gray-400">Legal</h4>
+                    <ul class="space-y-4 text-sm font-semibold">
+                        <li><a href="#" class="hover:text-blue-600 transition-colors">Terms of Service</a></li>
+                        <li><a href="#" class="hover:text-blue-600 transition-colors">Privacy Policy</a></li>
+                        <li><a href="#" class="hover:text-blue-600 transition-colors">Cookie Policy</a></li>
+                        <li><a href="#" class="hover:text-blue-600 transition-colors">Copyright</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="pt-8 border-t dark:border-gray-900 flex flex-col md:flex-row justify-between items-center gap-6">
+                <div class="text-sm text-gray-500 font-medium">
+                    &copy; 2026 TruthCheck AI. All rights reserved.
+                </div>
+                <div class="flex items-center gap-2 text-sm font-bold">
+                    <span>Designed by</span>
+                    <span class="gradient-text text-lg">PIYUSH MAURYA</span>
+                    <span class="text-gray-400">with</span>
+                    <span class="text-red-500">AI</span>
+                </div>
+            </div>
+        </div>
+    </footer>
+
     <script src="script.js"></script>
 </body>
 

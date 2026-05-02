@@ -1,148 +1,119 @@
-# 🕵️ TruthCheck.AI - Fake News Detection System
+# 🕵️ TruthCheck.AI - Multimodal AI Verification System
 
-**TruthCheck.AI** is a full-stack web application designed to combat misinformation. It uses advanced Generative AI (Llama 3.1 via Groq) to analyze news headlines and determine if they are likely **Real**, **Fake**, or **Satire**. It also features a live news feed aggregating top stories from India and the World.
-
----
-
-## 🚀 Features
-
-* **AI Analysis:** Instant verification of claims using the Llama 3.1 LLM.
-* **Live News Feed:** Real-time headlines from the GNews API (India & World).
-* **Smart Detection:** Classifies news with a confidence score and provides context.
-* **Modern UI:** Responsive design with **Tailwind CSS** and Dark Mode support.
-* **Report Export:** Download analysis results as images.
+**TruthCheck.AI** is a premium, full-stack web application designed to combat the digital epidemic of misinformation. Unlike standard fact-checkers, TruthCheck uses multimodal AI to analyze **News Headlines, Visual Media (Images/Videos), and Job Offers** to ensure you only trust what is real.
 
 ---
 
-## 🛠️ Prerequisites
+## 🚀 Key Features
 
-Before running this project, ensure you have the following installed:
+### 1. 📰 News Verification
+- **AI Analysis:** Instant verification of news claims using **Gemini 1.5 Flash** and **Llama 3.1**.
+- **Contextual Awareness:** Cross-references headlines with thousands of trusted global sources.
+- **Verdict & Confidence:** Get a definitive status (REAL, FAKE, or SATIRE) with an AI-generated confidence score.
 
-* [Node.js](https://nodejs.org/) (v18 or higher)
-* [Git](https://git-scm.com/)
+### 2. 🎞️ Deepfake & AI Media Detection
+- **Pixel Forensics:** Detects artifacts, unnatural lighting, and GAN fingerprints in images and short videos.
+- **Visual Evidence:** Analyzes if media was generated or heavily manipulated by AI tools like Sora or Midjourney.
+
+### 3. 💼 Job Scam Scanner
+- **Red Flag Detection:** Scans job descriptions and screenshots for signs of recruitment fraud (unrealistic pay, suspicious contacts).
+- **Protection:** Helps users avoid phishing attempts and financial scams.
+
+### 4. 🌍 Global & India News Feed
+- **Real-time Aggregation:** Live news feeds from the **GNews API**, categorized into International and Indian contexts.
+- **Trending Updates:** Stay informed with the most relevant verified headlines.
+
+### 5. 💎 Premium UI/UX Features
+- **Glassmorphism & Gradients:** A stunning, modern interface with high-performance visuals.
+- **Modal-Based Results:** Detailed analysis shown in a blurred, immersive popup.
+- **PDF Reports:** Download a professional verification report for any analysis.
+- **Theme Switcher:** Seamlessly switch between Sun (Light) and Moon (Dark) modes.
+- **Real-time Clock:** Live date and time tracking in the navigation bar.
+
+---
+
+## 🛠️ Technology Stack
+
+- **Frontend:** HTML5, Tailwind CSS (Vanilla JS), Lucide-style iconography.
+- **Backend:** Node.js, Express.js.
+- **AI Brain:** Google Gemini AI & Groq (Llama 3).
+- **Media Handling:** Multer for file processing.
+- **Report Generation:** jspdf & html2canvas.
 
 ---
 
 ## 🔑 Getting Your API Keys
 
-This project requires **two free API keys** to function.
+To run TruthCheck.AI, you need keys for the following services:
 
-1. **Groq API Key (The AI Brain):**
-* Visit [Groq Cloud Console](https://console.groq.com/keys).
-* Sign up/Login and click **Create API Key**.
-* Copy the key starting with `gsk_`.
-
-
-2. **GNews API Key (The Live News):**
-* Visit [GNews.io](https://gnews.io/).
-* Sign up and copy your API Key from the dashboard.
-
-
+1. **Gemini API Key:**
+   - Go to [Google AI Studio](https://aistudio.google.com/).
+   - Click **"Get API key"**.
+2. **Groq API Key:**
+   - Visit [Groq Cloud Console](https://console.groq.com/keys).
+   - Create a new API key.
+3. **GNews API Key:**
+   - Sign up at [GNews.io](https://gnews.io/) to get your free key for live news.
 
 ---
 
-## 💻 Installation Guide (Run Locally)
+## 💻 Installation Guide (For New Users)
 
-Follow these steps to run the project on your own computer.
+Follow these steps to set up the project on a new computer:
 
-### 1. Clone the Repository
+### 1. Prerequisites
+Ensure you have [Node.js](https://nodejs.org/) (v18+) and [Git](https://git-scm.com/) installed.
 
-Open your terminal and run:
-
+### 2. Clone the Repository
 ```bash
 git clone https://github.com/piyushmauryacodes/truthcheck-ai.git
 cd truthcheck-ai
-
 ```
 
-### 2. Install Dependencies
-
-Install the required Node.js libraries:
-
+### 3. Install Dependencies
 ```bash
 npm install
-
 ```
 
-### 3. Configure Environment Variables
-
-1. Create a new file named `.env` in the root folder.
-2. Paste the following inside and replace the placeholders with your actual keys:
-
+### 4. Configure Environment Variables
+Create a file named `.env` in the root directory and add your keys:
 ```env
-GROQ_API_KEY=your_actual_groq_key_here
-GNEWS_API_KEY=your_actual_gnews_key_here
+GEMINI_API_KEY=your_gemini_key_here
+GROQ_API_KEY=your_groq_key_here
+GNEWS_API_KEY=your_gnews_key_here
 PORT=3000
-
 ```
 
-### 4. Run the Application
-
-Start the server:
-
+### 5. Start the Application
 ```bash
 npm start
-
 ```
-
-You should see:
-
-> Server running on port 3000
-
-Open your browser and visit: `http://localhost:3000`
+Open your browser and go to: `http://localhost:3000`
 
 ---
 
 ## 🌍 Deployment Guide (Go Live)
 
-This project was deployed using **GitHub** and **Render** (Free Tier). Here is the exact process used:
-
 ### Step 1: Push to GitHub
+1. Initialize Git (if not already): `git init`
+2. Create `.gitignore` and add `.env` and `node_modules`.
+3. Push to your repo:
+   ```bash
+   git add .
+   git commit -m "Upgrade: Premium UI, Multimodal Detection, and PDF Reports"
+   git branch -M main
+   git push -u origin main
+   ```
 
-1. Initialize Git: `git init`
-2. Create a `.gitignore` file and add `.env` and `node_modules` to it (Crucial security step!).
-3. Commit changes:
-```bash
-git add .
-git commit -m "Initial commit"
-git branch -M main
-git remote add origin https://github.com/piyushmauryacodes/truthcheck-ai.git
-git push -u origin main
-
-```
-
-
-
-### Step 2: Deploy on Render
-
-1. Create an account on [Render.com](https://render.com/).
-2. Click **New +** -> **Web Service**.
-3. Connect your GitHub repository.
-4. **Settings:**
-* **Runtime:** Node
-* **Build Command:** `npm install`
-* **Start Command:** `node server.js`
-
-
-5. **Environment Variables:** (Add these in the Render dashboard under "Environment")
-* Key: `GROQ_API_KEY` | Value: `your_key`
-* Key: `GNEWS_API_KEY` | Value: `your_key`
-
-
-6. Click **Deploy Web Service**.
-
-Your site is now live! 🚀
+### Step 2: Deploy on Render.com
+1. Create a **New Web Service** and connect your GitHub repo.
+2. **Build Command:** `npm install`
+3. **Start Command:** `node server.js`
+4. **Environment Variables:** Add your `GEMINI_API_KEY`, `GROQ_API_KEY`, and `GNEWS_API_KEY` in the Render dashboard settings.
 
 ---
-
-## 🤝 Contributing
-
-Feel free to fork this repository and submit pull requests. For major changes, please open an issue first to discuss what you would like to change.
 
 ## 📄 License
+This project is open-source and available under the **MIT License**.
 
-This project is open-source and available under the [MIT License](https://www.google.com/search?q=LICENSE).
-
----
-
-**Developed by Piyush Maurya**
+**Designed and Developed by [PIYUSH MAURYA](https://github.com/piyushmauryacodes) with AI** 🚀
